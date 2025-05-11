@@ -18,6 +18,7 @@ import { Route as authAuthImport } from './routes/(auth)/_auth'
 import { Route as authAuthIndexImport } from './routes/(auth)/_auth.index'
 import { Route as publicPublicSignUpImport } from './routes/(public)/_public.sign-up'
 import { Route as publicPublicSignInImport } from './routes/(public)/_public.sign-in'
+import { Route as authAuthLobbyImport } from './routes/(auth)/_auth.lobby'
 
 // Create Virtual Routes
 
@@ -64,6 +65,12 @@ const publicPublicSignInRoute = publicPublicSignInImport.update({
   getParentRoute: () => publicPublicRoute,
 } as any)
 
+const authAuthLobbyRoute = authAuthLobbyImport.update({
+  id: '/lobby',
+  path: '/lobby',
+  getParentRoute: () => authAuthRoute,
+} as any)
+
 // Populate the FileRoutesByPath interface
 
 declare module '@tanstack/react-router' {
@@ -96,6 +103,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof publicPublicImport
       parentRoute: typeof publicRoute
     }
+    '/(auth)/_auth/lobby': {
+      id: '/(auth)/_auth/lobby'
+      path: '/lobby'
+      fullPath: '/lobby'
+      preLoaderRoute: typeof authAuthLobbyImport
+      parentRoute: typeof authAuthImport
+    }
     '/(public)/_public/sign-in': {
       id: '/(public)/_public/sign-in'
       path: '/sign-in'
@@ -123,10 +137,12 @@ declare module '@tanstack/react-router' {
 // Create and export the route tree
 
 interface authAuthRouteChildren {
+  authAuthLobbyRoute: typeof authAuthLobbyRoute
   authAuthIndexRoute: typeof authAuthIndexRoute
 }
 
 const authAuthRouteChildren: authAuthRouteChildren = {
+  authAuthLobbyRoute: authAuthLobbyRoute,
   authAuthIndexRoute: authAuthIndexRoute,
 }
 
@@ -171,12 +187,14 @@ const publicRouteWithChildren =
 
 export interface FileRoutesByFullPath {
   '/': typeof authAuthIndexRoute
+  '/lobby': typeof authAuthLobbyRoute
   '/sign-in': typeof publicPublicSignInRoute
   '/sign-up': typeof publicPublicSignUpRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof authAuthIndexRoute
+  '/lobby': typeof authAuthLobbyRoute
   '/sign-in': typeof publicPublicSignInRoute
   '/sign-up': typeof publicPublicSignUpRoute
 }
@@ -187,6 +205,7 @@ export interface FileRoutesById {
   '/(auth)/_auth': typeof authAuthRouteWithChildren
   '/(public)': typeof publicRouteWithChildren
   '/(public)/_public': typeof publicPublicRouteWithChildren
+  '/(auth)/_auth/lobby': typeof authAuthLobbyRoute
   '/(public)/_public/sign-in': typeof publicPublicSignInRoute
   '/(public)/_public/sign-up': typeof publicPublicSignUpRoute
   '/(auth)/_auth/': typeof authAuthIndexRoute
@@ -194,15 +213,16 @@ export interface FileRoutesById {
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/sign-in' | '/sign-up'
+  fullPaths: '/' | '/lobby' | '/sign-in' | '/sign-up'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/sign-in' | '/sign-up'
+  to: '/' | '/lobby' | '/sign-in' | '/sign-up'
   id:
     | '__root__'
     | '/(auth)'
     | '/(auth)/_auth'
     | '/(public)'
     | '/(public)/_public'
+    | '/(auth)/_auth/lobby'
     | '/(public)/_public/sign-in'
     | '/(public)/_public/sign-up'
     | '/(auth)/_auth/'
@@ -243,6 +263,7 @@ export const routeTree = rootRoute
       "filePath": "(auth)/_auth.tsx",
       "parent": "/(auth)",
       "children": [
+        "/(auth)/_auth/lobby",
         "/(auth)/_auth/"
       ]
     },
@@ -259,6 +280,10 @@ export const routeTree = rootRoute
         "/(public)/_public/sign-in",
         "/(public)/_public/sign-up"
       ]
+    },
+    "/(auth)/_auth/lobby": {
+      "filePath": "(auth)/_auth.lobby.tsx",
+      "parent": "/(auth)/_auth"
     },
     "/(public)/_public/sign-in": {
       "filePath": "(public)/_public.sign-in.tsx",

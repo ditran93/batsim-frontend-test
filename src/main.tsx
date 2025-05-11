@@ -16,6 +16,11 @@ declare module "@tanstack/react-router" {
   }
 }
 
+// Add global to window for SockJS
+if (typeof window !== "undefined" && !window.global) {
+  window.global = window;
+}
+
 // Render the app
 const rootElement = document.getElementById("root")!;
 if (!rootElement.innerHTML) {

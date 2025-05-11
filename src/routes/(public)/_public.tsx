@@ -6,9 +6,10 @@ export const Route = createFileRoute("/(public)/_public")({
 });
 
 function PublicLayout() {
-  const { user } = useAuth();
+  const { data: user } = useAuth();
 
   if (user) {
+    console.log("User is logged in, redirecting to home");
     return <Navigate to="/" />;
   }
   return (
