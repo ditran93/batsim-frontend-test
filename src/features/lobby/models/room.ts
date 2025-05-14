@@ -4,6 +4,6 @@ export interface Room {
   id: string;
   name: string;
   players: RoomUser[];
-  creator: string;
+  creator: RoomUser;
   status: "Waiting" | "Playing";
 }

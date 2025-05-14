@@ -38,24 +38,19 @@ function LobbyPage() {
     }
   }, [initialGameRooms]);
 
-  // Connect to WebSocket when component mounts
   useEffect(() => {
-    // Connect to WebSocket
     const socket = new SockJS(`${import.meta.env.VITE_API_URL}/ws-connect`);
-    const client = new Client({
+
+    const stompClient = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,
       onConnect: () => {
         console.log("Connected to game rooms socket");
 
-        // Subscribe to lobby updates
-        client.subscribe("/topic/rooms", (message) => {
+        stompClient.subscribe("/topic/rooms", (message) => {
           const data = JSON.parse(message.body);
-          console.log("Received lobby update:", data);
 
-          // Update game rooms if the data contains them
           if (data) {
-            console.log("Game rooms updated:", data);
             const rooms: Room[] = data.map((room: RoomResponse) => ({
               id: room.id,
               name: room.name,
@@ -70,20 +65,24 @@ function LobbyPage() {
       },
     });
 
-    client.activate();
-    setStompClient(client);
+    stompClient.activate();
+    setStompClient(stompClient);
+
+    return () => {
+      if (stompClient) {
+        stompClient.deactivate();
+      }
+    };
   }, []);
 
   const handleJoinRoom = (request: JoinRoomRequest) => {
     if (!stompClient) return;
 
-    // Send WebSocket message to join room
     stompClient.publish({
       destination: "/app/room/join",
       body: JSON.stringify(request),
     });
 
-    // Navigate to the room page
     navigate({
       to: "/room/$roomId",
       params: {
@@ -94,36 +93,41 @@ function LobbyPage() {
     toast.success(`Joining room: ${request.roomId}`);
   };
 
-  const getRoomIdByCreatorUsername = (creatorUsername: string) => {
-    const room = gameRooms.find((room) => room.creator === creatorUsername);
-    return room ? room.id : null;
-  };
-
   const handleCreateRoom = () => {
     if (!stompClient || !roomName.trim() || !user?.username) return;
 
-    // Send WebSocket message to create room
+    toast.success(`Creating room: ${roomName}`);
+    setRoomName("");
+
+    // Subscribe to get personal response with room ID
+    const subscription = stompClient.subscribe(
+      "/topic/room/created",
+      (message) => {
+        const response = JSON.parse(message.body);
+        console.log("Room created:", response);
+
+        // Navigate to the new room
+        navigate({
+          to: "/room/$roomId",
+          params: {
+            roomId: response.id,
+          },
+        });
+
+        // Clean up subscription
+        stompClient.unsubscribe(subscription.id);
+      }
+    );
+
+    // Send create room request
     stompClient.publish({
       destination: "/app/room/create",
       body: JSON.stringify({
         roomName: roomName,
-        userId: user?.id,
-        username: user?.username,
+        userId: user.id,
+        username: user.username,
       }),
     });
-
-    toast.success(`Creating room: ${roomName}`);
-    setRoomName(""); // Clear input after submission
-    const roomId = getRoomIdByCreatorUsername(user.username);
-    if (roomId) {
-      console.log("Navigating to room:", roomId);
-      navigate({
-        to: "/room/$roomId",
-        params: {
-          roomId: roomId.toString(),
-        },
-      });
-    }
   };
 
   const handleLeaveLobby = () => {

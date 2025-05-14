@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/features/auth/hooks/use-auth";
 import { useGetRoomById } from "@/features/lobby/hooks/use-get-room-by-id";
 import type { LeaveRoomRequest } from "@/features/lobby/models/leave-room-request";
+import type { Room } from "@/features/lobby/models/room";
 import { Client } from "@stomp/stompjs";
 
 import {
@@ -24,12 +25,28 @@ function RoomIdPage() {
   const { roomId } = useParams({
     from: "/(auth)/_auth/room/$roomId",
   });
-  const { data: roomDetails, isLoading: isRoomLoading } = useGetRoomById({
-    id: roomId,
-  });
+  const { data: initialRoomDetails, isLoading: isRoomLoading } = useGetRoomById(
+    {
+      id: roomId,
+    }
+  );
+
+  const [roomDetails, setRoomDetails] = useState<Room | null>(null);
 
   useEffect(() => {
-    // Connect to WebSocket
+    if (initialRoomDetails) {
+      const room: Room = {
+        id: initialRoomDetails.id,
+        name: initialRoomDetails.name,
+        players: initialRoomDetails.players,
+        status: "Waiting",
+        creator: initialRoomDetails.creator,
+      };
+      setRoomDetails(room);
+    }
+  }, [initialRoomDetails]);
+
+  useEffect(() => {
     const socket = new SockJS(`${import.meta.env.VITE_API_URL}/ws-connect`);
     const client = new Client({
       webSocketFactory: () => socket,
@@ -37,10 +54,19 @@ function RoomIdPage() {
       onConnect: () => {
         console.log("Connected to game rooms socket");
 
-        // Subscribe to lobby updates
         client.subscribe("/topic/room/" + roomId, (message) => {
           const data = JSON.parse(message.body);
           console.log("Received room update:", data);
+          if (data) {
+            const room: Room = {
+              id: data.id,
+              name: data.name,
+              players: data.players,
+              status: "Waiting",
+              creator: data.creator.username,
+            };
+            setRoomDetails(room);
+          }
         });
       },
     });
@@ -50,17 +76,14 @@ function RoomIdPage() {
   }, []);
 
   const handleLeaveRoom = (request: LeaveRoomRequest) => {
-    // Logic to leave the room
     console.log("Leaving room with ID:", roomId);
     if (!stompClient) return;
 
-    // Send WebSocket message to join room
     stompClient.publish({
       destination: "/app/room/leave",
       body: JSON.stringify(request),
     });
 
-    // Navigate to the room page
     navigate({
       to: "/lobby",
     });
@@ -69,28 +92,40 @@ function RoomIdPage() {
   };
 
   return (
-    <div>
-      <h1>Room ID: {roomId}</h1>
+    <div className="p-4 max-w-4xl mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Room: {roomDetails?.name}</h1>
+        <Button
+          variant="outline"
+          onClick={() => {
+            if (user) {
+              handleLeaveRoom({ roomId: roomId, userId: user?.id.toString() });
+            }
+          }}
+        >
+          Leave Room
+        </Button>
+      </div>
+
       {isRoomLoading ? (
         <p>Loading...</p>
       ) : (
-        <div>
-          <h2>Room Details</h2>
-          <p>Name: {roomDetails?.name}</p>
-          <p>Players: {roomDetails?.players.length}</p>
-          <p>Creator: {roomDetails?.creator.username}</p>
-          <p>Status: {"Waiting"}</p>
+        <div className="border rounded-md p-4">
+          <h2 className="text-xl font-semibold mb-4">Players</h2>
+          <ul className="space-y-2">
+            {roomDetails?.players.map((player, index) => (
+              <li key={index} className="flex items-center gap-2">
+                <span className="font-medium">{player.username}</span>
+                {roomDetails?.creator.userId === player.userId && (
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                    Creator
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
-      <Button
-        onClick={() => {
-          if (user) {
-            handleLeaveRoom({ roomId: roomId, userId: user?.id.toString() });
-          }
-        }}
-      >
-        Leave Room
-      </Button>
     </div>
   );
 }

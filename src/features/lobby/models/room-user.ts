@@ -1,4 +1,8 @@
+import type { Character } from "./character";
+
 export interface RoomUser {
-  id: number;
+  userId: number;
   username: string;
+  activeCharacter: Character[];
+  defeatedCharacters: Character[];
 }
