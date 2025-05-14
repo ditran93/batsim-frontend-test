@@ -19,6 +19,7 @@ import { Route as authAuthIndexImport } from './routes/(auth)/_auth.index'
 import { Route as publicPublicSignUpImport } from './routes/(public)/_public.sign-up'
 import { Route as publicPublicSignInImport } from './routes/(public)/_public.sign-in'
 import { Route as authAuthLobbyImport } from './routes/(auth)/_auth.lobby'
+import { Route as authAuthRoomRoomIdImport } from './routes/(auth)/_auth.room.$roomId'
 
 // Create Virtual Routes
 
@@ -68,6 +69,12 @@ const publicPublicSignInRoute = publicPublicSignInImport.update({
 const authAuthLobbyRoute = authAuthLobbyImport.update({
   id: '/lobby',
   path: '/lobby',
+  getParentRoute: () => authAuthRoute,
+} as any)
+
+const authAuthRoomRoomIdRoute = authAuthRoomRoomIdImport.update({
+  id: '/room/$roomId',
+  path: '/room/$roomId',
   getParentRoute: () => authAuthRoute,
 } as any)
 
@@ -131,6 +138,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof authAuthIndexImport
       parentRoute: typeof authAuthImport
     }
+    '/(auth)/_auth/room/$roomId': {
+      id: '/(auth)/_auth/room/$roomId'
+      path: '/room/$roomId'
+      fullPath: '/room/$roomId'
+      preLoaderRoute: typeof authAuthRoomRoomIdImport
+      parentRoute: typeof authAuthImport
+    }
   }
 }
 
@@ -139,11 +153,13 @@ declare module '@tanstack/react-router' {
 interface authAuthRouteChildren {
   authAuthLobbyRoute: typeof authAuthLobbyRoute
   authAuthIndexRoute: typeof authAuthIndexRoute
+  authAuthRoomRoomIdRoute: typeof authAuthRoomRoomIdRoute
 }
 
 const authAuthRouteChildren: authAuthRouteChildren = {
   authAuthLobbyRoute: authAuthLobbyRoute,
   authAuthIndexRoute: authAuthIndexRoute,
+  authAuthRoomRoomIdRoute: authAuthRoomRoomIdRoute,
 }
 
 const authAuthRouteWithChildren = authAuthRoute._addFileChildren(
@@ -190,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/lobby': typeof authAuthLobbyRoute
   '/sign-in': typeof publicPublicSignInRoute
   '/sign-up': typeof publicPublicSignUpRoute
+  '/room/$roomId': typeof authAuthRoomRoomIdRoute
 }
 
 export interface FileRoutesByTo {
@@ -197,6 +214,7 @@ export interface FileRoutesByTo {
   '/lobby': typeof authAuthLobbyRoute
   '/sign-in': typeof publicPublicSignInRoute
   '/sign-up': typeof publicPublicSignUpRoute
+  '/room/$roomId': typeof authAuthRoomRoomIdRoute
 }
 
 export interface FileRoutesById {
@@ -209,13 +227,14 @@ export interface FileRoutesById {
   '/(public)/_public/sign-in': typeof publicPublicSignInRoute
   '/(public)/_public/sign-up': typeof publicPublicSignUpRoute
   '/(auth)/_auth/': typeof authAuthIndexRoute
+  '/(auth)/_auth/room/$roomId': typeof authAuthRoomRoomIdRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/lobby' | '/sign-in' | '/sign-up'
+  fullPaths: '/' | '/lobby' | '/sign-in' | '/sign-up' | '/room/$roomId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/lobby' | '/sign-in' | '/sign-up'
+  to: '/' | '/lobby' | '/sign-in' | '/sign-up' | '/room/$roomId'
   id:
     | '__root__'
     | '/(auth)'
@@ -226,6 +245,7 @@ export interface FileRouteTypes {
     | '/(public)/_public/sign-in'
     | '/(public)/_public/sign-up'
     | '/(auth)/_auth/'
+    | '/(auth)/_auth/room/$roomId'
   fileRoutesById: FileRoutesById
 }
 
@@ -264,7 +284,8 @@ export const routeTree = rootRoute
       "parent": "/(auth)",
       "children": [
         "/(auth)/_auth/lobby",
-        "/(auth)/_auth/"
+        "/(auth)/_auth/",
+        "/(auth)/_auth/room/$roomId"
       ]
     },
     "/(public)": {
@@ -295,6 +316,10 @@ export const routeTree = rootRoute
     },
     "/(auth)/_auth/": {
       "filePath": "(auth)/_auth.index.tsx",
+      "parent": "/(auth)/_auth"
+    },
+    "/(auth)/_auth/room/$roomId": {
+      "filePath": "(auth)/_auth.room.$roomId.tsx",
       "parent": "/(auth)/_auth"
     }
   }
